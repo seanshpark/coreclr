@@ -26,6 +26,9 @@ include_directories(include)
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL AMD64)
   set(PAL_CMAKE_PLATFORM_ARCH_AMD64 1)
   add_definitions(-D_AMD64_)
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL i686)
+  set(CLR_CMAKE_PLATFORM_ARCH_I386 1)
+  add_definitions(-D_X86_)
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL armv7l)
   set(PAL_CMAKE_PLATFORM_ARCH_ARM 1)
   add_definitions(-D_ARM_)
@@ -56,6 +59,8 @@ add_definitions(-D_FILE_OFFSET_BITS=64)
 if(PAL_CMAKE_PLATFORM_ARCH_AMD64)
   add_definitions(-DBIT64=1)
   add_definitions(-D_WIN64=1)
+elseif(CLR_CMAKE_PLATFORM_ARCH_I386)
+  add_definitions(-DBIT32=1)
 elseif(PAL_CMAKE_PLATFORM_ARCH_ARM)
   add_definitions(-DBIT32=1)
 elseif(PAL_CMAKE_PLATFORM_ARCH_ARM64)
@@ -79,6 +84,13 @@ set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} -Wl,--no
 add_compile_options(-fPIC)
 
 if(PAL_CMAKE_PLATFORM_ARCH_AMD64)
+  set(ARCH_SOURCES
+    arch/i386/context2.S
+    arch/i386/debugbreak.S
+    arch/i386/exceptionhelper.S
+    arch/i386/processor.cpp
+  )
+elseif(CLR_CMAKE_PLATFORM_ARCH_I386)
   set(ARCH_SOURCES
     arch/i386/context2.S
     arch/i386/debugbreak.S

@@ -304,3 +304,6 @@ src/jit32
 
 # performance testing sandbox
 sandbox
+
+# Cross x86 include cmake files
+!/cross/x86

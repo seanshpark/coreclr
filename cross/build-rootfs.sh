@@ -3,7 +3,7 @@
 usage()
 {
     echo "Usage: $0 [BuildArch] [UbuntuCodeName]"
-    echo "BuildArch can be: arm, arm-softfp, arm64"
+    echo "BuildArch can be: arm, arm-softfp, arm64, x86"
     echo "UbuntuCodeName - optional, Code name for Ubuntu, can be: trusty(default), vivid, wily, xenial. If BuildArch is arm-softfp, UbuntuCodeName is ignored."
 
     exit 1
@@ -48,6 +48,13 @@ for i in "$@"
         __UbuntuRepo="http://ftp.debian.org/debian/"
         __MachineTriple=arm-linux-gnueabi
         __UbuntuCodeName=jessie
+        ;;
+        x86)
+        __BuildArch=x86
+        __UbuntuArch=i386
+        __UbuntuRepo="http://archive.ubuntu.com/ubuntu/"
+        __LLDB_Package="lldb-3.8-dev"
+        __UbuntuPackages="$__UbuntuPackagesBase $__LLDB_Package"
         ;;
         vivid)
         if [ "$__UbuntuCodeName" != "jessie" ]; then
