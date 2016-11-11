@@ -955,7 +955,11 @@ inline void DbgWPrintf(const LPCWSTR wszFormat, ...)
     }
     else
     {
+#if defined(WIN32)
         fwprintf(stdout, W("%s"), wszBuffer);
+#else
+        __asm { int3 }
+#endif
         fflush(stdout);
     }
 }

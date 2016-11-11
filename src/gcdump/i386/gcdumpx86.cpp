@@ -9,7 +9,9 @@
 #ifdef _TARGET_X86_
 /*****************************************************************************/
 
+#ifdef WIN32
 #include "utilcode.h"           // For _ASSERTE()
+#endif
 #include "gcdump.h"
 
 

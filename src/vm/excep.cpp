@@ -1699,9 +1699,9 @@ BOOL LeaveCatch(ICodeManager* pEECM,
             (!pThread->IsAbortRequested()) );
 
     LPVOID esp = COMPlusEndCatchWorker(pThread);
-
+#ifndef FEATURE_PAL
     PopNestedExceptionRecords(esp, pCtx, pThread->GetExceptionListPtr());
-
+#endif
     // Do JIT-specific work
     pEECM->LeaveCatch(gcInfoToken, offset, pCtx);
 
@@ -3545,6 +3545,7 @@ DWORD MapWin32FaultToCOMPlusException(EXCEPTION_RECORD *pExceptionRecord)
 // check if anyone has written to the stack above the handler which would wipe out the EH registration
 void CheckStackBarrier(EXCEPTION_REGISTRATION_RECORD *exRecord)
 {
+#if defined(_TARGET_X86_) && defined(WIN32)
     LIMITED_METHOD_CONTRACT;
 
     if (exRecord->Handler != (PEXCEPTION_ROUTINE)COMPlusFrameHandler)
@@ -3557,6 +3558,7 @@ void CheckStackBarrier(EXCEPTION_REGISTRATION_RECORD *exRecord)
             _ASSERTE(!"Fatal error: the stack has been overwritten");
         }
     }
+#endif
 }
 #endif // WIN64EXCEPTIONS
 #endif // _DEBUG
@@ -7313,8 +7315,8 @@ AdjustContextForWriteBarrier(
 
     void* f_IP = (void *)GetIP(pContext);
 
-    if (f_IP >= (void *) JIT_WriteBarrierStart && f_IP <= (void *) JIT_WriteBarrierLast ||
-        f_IP >= (void *) JIT_PatchedWriteBarrierStart && f_IP <= (void *) JIT_PatchedWriteBarrierLast)
+    if ((f_IP >= (void *) JIT_WriteBarrierStart && f_IP <= (void *) JIT_WriteBarrierLast) ||
+        (f_IP >= (void *) JIT_PatchedWriteBarrierStart && f_IP <= (void *) JIT_PatchedWriteBarrierLast))
     {
         // set the exception IP to be the instruction that called the write barrier
         void* callsite = (void *)GetAdjustedCallAddress(*dac_cast<PTR_PCODE>(GetSP(pContext)));

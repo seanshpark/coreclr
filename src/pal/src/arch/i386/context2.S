@@ -7,7 +7,9 @@
 // and is always apply to the current thread.
 //
 
+#if defined(_AMD64_)
 .intel_syntax noprefix
+#endif
 #include "unixasmmacros.inc"
 #include "asmconstants.h"
 
@@ -255,5 +257,11 @@ C_FUNC(CONTEXT_CaptureContext):
     movdqu %xmm7, CONTEXT_Xmm7(%eax)
 2:
     ret
+
+LEAF_ENTRY RtlCaptureContext, _TEXT
+    int3
+    //mov     DWORD PTR [edi + CONTEXT_ContextFlags], (CONTEXT_i386 | CONTEXT_FULL | CONTEXT_SEGMENTS)
+    //jmp     C_FUNC(CONTEXT_CaptureContext)
+LEAF_END RtlCaptureContext, _TEXT
 
 #endif

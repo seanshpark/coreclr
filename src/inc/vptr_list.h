@@ -100,7 +100,7 @@ VPTR_CLASS(HelperMethodFrame_PROTECTOBJ)
 VPTR_CLASS(HijackFrame)
 #endif
 VPTR_CLASS(InlinedCallFrame)
-#if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_)
+#if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_) && defined(WIN32)
 VPTR_CLASS(LeaveRuntimeFrame)
 VPTR_CLASS(ReverseEnterRuntimeFrame)
 #endif
@@ -120,7 +120,7 @@ VPTR_CLASS(ExternalMethodFrame)
 #ifdef FEATURE_READYTORUN
 VPTR_CLASS(DynamicHelperFrame)
 #endif
-#if !defined(_TARGET_X86_)
+#if !(defined(_TARGET_X86_) && defined(WIN32))
 VPTR_CLASS(StubHelperFrame)
 #endif
 #ifdef FEATURE_REMOTING

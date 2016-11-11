@@ -176,7 +176,9 @@ void ArrayInitializeWorker(ARRAYBASEREF * arrayRef,
 #ifdef _X86_
     BEGIN_CALL_TO_MANAGED();
 
+#ifndef _DEBUG
     typedef void (__fastcall * CtorFtnType)(BYTE*, BYTE*);
+#endif
 
     for (SIZE_T i = 0; i < cElements; i++)
     {

@@ -835,7 +835,7 @@ RtlVirtualUnwind_Unsafe(
 //  X86
 //
 
-#if defined(_TARGET_X86_)
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 #pragma warning(push)
 #pragma warning (disable:4035)        // disable 4035 (function must return something)

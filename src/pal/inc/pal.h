@@ -1831,6 +1831,13 @@ QueueUserAPC(
 
 #define MAXIMUM_SUPPORTED_EXTENSION     512
 
+#define CONTEXT_XSTATE (CONTEXT_i386 | 0x40L)
+
+#define CONTEXT_EXCEPTION_ACTIVE        0x8000000
+#define CONTEXT_SERVICE_ACTIVE          0x10000000
+#define CONTEXT_EXCEPTION_REQUEST       0x40000000
+#define CONTEXT_EXCEPTION_REPORTING     0x80000000
+
 typedef struct _FLOATING_SAVE_AREA {
     DWORD   ControlWord;
     DWORD   StatusWord;
@@ -1888,6 +1895,27 @@ typedef struct _CONTEXT {
 // be either (as long as we're consistent across GetThreadContext() and SetThreadContext() and we don't
 // support any other values in the ExtendedRegisters) but we might as well be as accurate as we can.
 #define CONTEXT_EXREG_XMM_OFFSET 160
+
+//
+// Nonvolatile context pointer record.
+//
+
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS {
+
+    PDWORD Edi;
+    PDWORD Esi;
+    PDWORD Ebx;
+    PDWORD Edx;
+    PDWORD Ecx;
+    PDWORD Eax;
+    PDWORD Ebp;
+    PDWORD Eip;
+    PDWORD SegCs;
+    PDWORD EFlags;
+    PDWORD Esp;
+    PDWORD SegSs;
+
+} KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
 
 #elif defined(_PPC_)
 
@@ -3283,6 +3311,8 @@ PALIMPORT BOOL PALAPI PAL_VirtualUnwindOutOfProc(CONTEXT *context,
 #elif defined(__linux__) && defined(_ARM64_)
 #define PAL_CS_NATIVE_DATA_SIZE 116
 #elif defined(__linux__) && defined(__x86_64__)
+#define PAL_CS_NATIVE_DATA_SIZE 96
+#elif defined(__linux__) && defined(__i386__)
 #define PAL_CS_NATIVE_DATA_SIZE 96
 #elif defined(__NetBSD__) && defined(__amd64__)
 #define PAL_CS_NATIVE_DATA_SIZE 96

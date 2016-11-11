@@ -1252,6 +1252,10 @@ class ArrayStubCache : public StubCacheBase
                              StubLinker *psl);
     virtual UINT Length(const BYTE *pRawStub);
 
+#if defined(_TARGET_X86_) && !defined(WIN32)
+    virtual ~ArrayStubCache() {}
+#endif
+
 public:
     static ArrayStubCache * GetArrayStubCache()
     {

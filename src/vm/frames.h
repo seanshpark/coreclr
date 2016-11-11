@@ -138,7 +138,7 @@
 //    +-FuncEvalFrame         - frame for debugger function evaluation
 #endif // DEBUGGING_SUPPORTED
 //    |
-#if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_)
+#if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_) && defined(WIn32)
 //    |
 //    +-ReverseEnterRuntimeFrame
 //    |
@@ -250,7 +250,7 @@ FRAME_TYPE_NAME(ExternalMethodFrame)
 #ifdef FEATURE_READYTORUN
 FRAME_TYPE_NAME(DynamicHelperFrame)
 #endif
-#if !defined(_TARGET_X86_)
+#if !(defined(_TARGET_X86_) && defined(WIN32))
 FRAME_TYPE_NAME(StubHelperFrame)
 #endif
 FRAME_TYPE_NAME(GCFrame)
@@ -266,7 +266,7 @@ FRAME_TYPE_NAME(DebuggerClassInitMarkFrame)
 FRAME_TYPE_NAME(DebuggerSecurityCodeMarkFrame)
 FRAME_TYPE_NAME(DebuggerExitFrame)
 FRAME_TYPE_NAME(DebuggerU2MCatchHandlerFrame)
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_)
 FRAME_TYPE_NAME(UMThkCallFrame)
 #endif
 #if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_)
@@ -1905,6 +1905,10 @@ class UnmanagedToManagedFrame : public Frame
 {
     friend class CheckAsmOffsets;
 
+#if defined(_TARGET_X86_UNIX_)
+protected:
+    UnmanagedToManagedFrame() {  LIMITED_METHOD_CONTRACT; }
+#endif
     VPTR_ABSTRACT_VTABLE_CLASS(UnmanagedToManagedFrame, Frame)
 
 public:
@@ -2413,7 +2417,7 @@ typedef VPTR(class DynamicHelperFrame) PTR_DynamicHelperFrame;
 // This frame is used for instantiating stubs when the argument transform
 // is too complex to generate a tail-calling stub.
 //------------------------------------------------------------------------
-#if !defined(_TARGET_X86_)
+#if !(defined(_TARGET_X86_) && defined(WIN32))
 class StubHelperFrame : public TransitionFrame
 {
     friend class CheckAsmOffsets;
@@ -2897,7 +2901,7 @@ typedef DPTR(class UMThunkMarshInfo) PTR_UMThunkMarshInfo;
 class UMEntryThunk;
 typedef DPTR(class UMEntryThunk) PTR_UMEntryThunk;
 
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_)
 //------------------------------------------------------------------------
 // This frame guards an unmanaged->managed transition thru a UMThk
 //------------------------------------------------------------------------
@@ -2949,7 +2953,7 @@ struct ComToManagedExRecord
 };
 #endif // _TARGET_X86_
 
-#if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_)
+#if defined(FEATURE_INCLUDE_ALL_INTERFACES) && defined(_TARGET_X86_) && defined(WIN32)
 //-----------------------------------------------------------------------------
 // ReverseEnterRuntimeFrame
 //-----------------------------------------------------------------------------
@@ -3066,7 +3070,7 @@ public:
     // method if the current InlinedCallFrame is inactive.
     PTR_MethodDesc GetActualInteropMethodDesc()
     {
-#if defined(_TARGET_X86_) || defined(_TARGET_ARM_)
+#if (defined(_TARGET_X86_) && defined(WIN32)) || defined(_TARGET_ARM_)
         // Important: This code relies on the way JIT lays out frames. Keep it in sync
         // with code:Compiler.lvaAssignFrameOffsets.
         //

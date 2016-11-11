@@ -9542,7 +9542,7 @@ mdTypeRef NativeImageDumper::FindTypeRefForMT( PTR_MethodTable mt )
 #undef NOTHROW
 #undef GC_NOTRIGGER
 
-#if defined _DEBUG && defined _TARGET_X86_ 
+#if defined _DEBUG && defined _TARGET_X86_  && defined(WIN32)
 // disable FPO for checked build
 #pragma optimize("y", off)
 #endif

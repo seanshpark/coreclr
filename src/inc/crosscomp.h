@@ -8,7 +8,11 @@
 
 #pragma once
 
-#if defined(_X86_) && defined(_TARGET_ARM_)      // Host X86 managing ARM related code
+#if defined(_TARGET_ARM_)
+fdsjkfjsdkljfdskl
+#endif
+
+#if (defined(_X86_) && defined(WIN32)) && defined(_TARGET_ARM_)      // Host X86 managing ARM related code
 
 #ifndef CROSS_COMPILE
 #define CROSS_COMPILE

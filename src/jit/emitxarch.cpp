@@ -1163,6 +1163,7 @@ inline unsigned emitter::insEncodeReg345(instruction ins, regNumber reg, emitAtt
 inline size_t emitter::insEncodeReg3456(instruction ins, regNumber reg, emitAttr size, size_t code)
 {
 #ifdef FEATURE_AVX_SUPPORT
+#ifdef _TARGET_AMD64_
     assert(reg < REG_STK);
     assert(IsAVXInstruction(ins));
     assert(hasVexPrefix(code));
@@ -1182,6 +1183,9 @@ inline size_t emitter::insEncodeReg3456(instruction ins, regNumber reg, emitAttr
     regBits <<= 35;
     return code ^ regBits;
 
+#else
+    return code;
+#endif
 #else
     return code;
 #endif
@@ -7031,6 +7035,8 @@ void emitter::emitDispIns(
             else if ((ins == INS_cvttsd2si)
 #ifndef LEGACY_BACKEND
                      || (ins == INS_cvtss2si) || (ins == INS_cvtsd2si) || (ins == INS_cvttss2si)
+#else
+                     || 0 // or gives "error: equality comparison with extraneous parentheses"
 #endif
                          )
             {

@@ -4144,11 +4144,15 @@ private:
     // if enum_flag_enum_flag_HasIndirectParent is set. The indirection is offset by offsetof(MethodTable, m_pParentMethodTable).
     // It allows casting helpers to go through parent chain natually. Casting helper do not need need the explicit check
     // for enum_flag_HasIndirectParentMethodTable.
+public:
     TADDR           m_pParentMethodTable;
+private:
 
     PTR_Module      m_pLoaderModule;    // LoaderModule. It is equal to the ZapModule in ngened images
     
+public:
     PTR_MethodTableWriteableData m_pWriteableData;
+private:
     
     // The value of lowest two bits describe what the union contains
     enum LowBits {

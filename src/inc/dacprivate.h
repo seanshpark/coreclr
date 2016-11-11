@@ -62,6 +62,9 @@ struct DacpObjectData : ZeroInit<DacpObjectData>
 {
     CLRDATA_ADDRESS MethodTable;
     DacpObjectType ObjectType;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     ULONG64 Size;
     CLRDATA_ADDRESS ElementTypeHandle;
     CorElementType ElementType;
@@ -142,12 +145,18 @@ struct DacpMethodTableFieldData : ZeroInit<DacpMethodTableFieldData>
     WORD wNumInstanceFields;
     WORD wNumStaticFields;
     WORD wNumThreadStaticFields;
+#if defined(_TARGET_X86_UNIX_)
+    WORD dummyalign1;
+#endif
 
     CLRDATA_ADDRESS FirstField; // If non-null, you can retrieve more
     
     WORD wContextStaticOffset;
     WORD wContextStaticsSize;
-    
+
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign2;
+#endif
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS addr)
     {
         return sos->GetMethodTableFieldData(addr, this);
@@ -214,7 +223,10 @@ struct DacpModuleData : ZeroInit<DacpModuleData>
     ULONG64 dwModuleID;
 
     DWORD dwTransientFlags;
-    
+
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     CLRDATA_ADDRESS TypeDefToMethodTableMap;
     CLRDATA_ADDRESS TypeRefToMethodTableMap;
     CLRDATA_ADDRESS MethodDefToDescMap;
@@ -246,6 +258,9 @@ private:
 struct DacpMethodTableData : ZeroInit<DacpMethodTableData>
 {
     BOOL bIsFree; // everything else is NULL if this is true.
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     CLRDATA_ADDRESS Module;
     CLRDATA_ADDRESS Class;
     CLRDATA_ADDRESS ParentMethodTable;
@@ -260,7 +275,10 @@ struct DacpMethodTableData : ZeroInit<DacpMethodTableData>
     BOOL bIsShared; // flags & enum_flag_DomainNeutral
     BOOL bIsDynamic;
     BOOL bContainsPointers;
-    
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign2;
+#endif
+
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS addr)
     {
         return sos->GetMethodTableData(addr, this);
@@ -286,11 +304,16 @@ struct DacpThreadStoreData : ZeroInit<DacpThreadStoreData>
     LONG backgroundThreadCount;
     LONG pendingThreadCount;
     LONG deadThreadCount;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign1;
+#endif
     CLRDATA_ADDRESS firstThread;
     CLRDATA_ADDRESS finalizerThread;
     CLRDATA_ADDRESS gcThread;
     DWORD fHostConfig;          // Uses hosting flags defined above
-	
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign2;
+#endif
     HRESULT Request(ISOSDacInterface *sos)
     {
         return sos->GetThreadStoreData(this);
@@ -302,6 +325,9 @@ struct DacpAppDomainStoreData : ZeroInit<DacpAppDomainStoreData>
     CLRDATA_ADDRESS sharedDomain;
     CLRDATA_ADDRESS systemDomain;
     LONG DomainCount;
+#if defined(_TARGET_X86_UNIX_)
+    LONG dummyalign1;
+#endif
 
     HRESULT Request(ISOSDacInterface *sos)
     {
@@ -372,7 +398,10 @@ struct DacpCCWData : ZeroInit<DacpCCWData>
     BOOL hasStrongRef;
     BOOL isExtendsCOMObject;
     BOOL isAggregated;
-    
+
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign1;
+#endif
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS ccw)
     {
         return sos->GetCCWData(ccw, this);
@@ -432,6 +461,9 @@ struct DacpAssemblyData : ZeroInit<DacpAssemblyData>
     UINT LoadContext;
     BOOL isDomainNeutral;
     DWORD dwLocationFlags;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign1;
+#endif
 
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS addr, CLRDATA_ADDRESS baseDomainPtr)
     {
@@ -457,6 +489,9 @@ struct DacpThreadData : ZeroInit<DacpThreadData>
     CLRDATA_ADDRESS domain;
     CLRDATA_ADDRESS pFrame;
     DWORD lockCount;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign1;
+#endif
     CLRDATA_ADDRESS firstNestedException; // Pass this pointer to DacpNestedExceptionInfo
     CLRDATA_ADDRESS teb;
     CLRDATA_ADDRESS fiberData;
@@ -482,6 +517,9 @@ struct DacpReJitData : ZeroInit<DacpReJitData>
 
     CLRDATA_ADDRESS                 rejitID;
     Flags                           flags;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD                           dummyalign1;
+#endif
     CLRDATA_ADDRESS                 NativeCodeAddr;
 };
     
@@ -490,6 +528,10 @@ struct DacpMethodDescData : ZeroInit<DacpMethodDescData>
     BOOL            bHasNativeCode;
     BOOL            bIsDynamic;
     WORD            wSlotNumber;
+#if defined(_TARGET_X86_UNIX_)
+    WORD            dummyalign1;
+    DWORD           dummyalign2;
+#endif
     CLRDATA_ADDRESS NativeCodeAddr;
     // Useful for breaking when a method is jitted.
     CLRDATA_ADDRESS AddressOfNativeCodeSlot;
@@ -499,6 +541,9 @@ struct DacpMethodDescData : ZeroInit<DacpMethodDescData>
     CLRDATA_ADDRESS ModulePtr;
     
     mdToken                  MDToken;
+#if defined(_TARGET_X86_UNIX_)
+    mdToken         dummyalign3;
+#endif
     CLRDATA_ADDRESS GCInfo;
     CLRDATA_ADDRESS GCStressCodeCopy;
 
@@ -515,6 +560,9 @@ struct DacpMethodDescData : ZeroInit<DacpMethodDescData>
     
     // Total number of rejit versions that have been jitted
     ULONG               cJittedRejitVersions;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD               dummyalign4;
+#endif
 
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS addr)
     {
@@ -548,9 +596,15 @@ struct DacpCodeHeaderData : ZeroInit<DacpCodeHeaderData>
 {        
     CLRDATA_ADDRESS GCInfo;
     JITTypes                   JITType;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     CLRDATA_ADDRESS MethodDescPtr;
     CLRDATA_ADDRESS MethodStart;
     DWORD                    MethodSize;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign2;
+#endif
     CLRDATA_ADDRESS ColdRegionStart;
     DWORD           ColdRegionSize;
     DWORD           HotRegionSize;
@@ -711,6 +765,9 @@ struct DacpHeapSegmentData
     CLRDATA_ADDRESS highAllocMark;
 
     size_t flags;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     CLRDATA_ADDRESS background_allocated;
 
     HRESULT Request(ISOSDacInterface *sos, CLRDATA_ADDRESS addr, const DacpGcHeapDetails& heap)
@@ -733,12 +790,21 @@ struct DacpHeapSegmentData
 struct DacpOomData : ZeroInit<DacpOomData>
 {
     int reason;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign1;
+#endif
     ULONG64 alloc_size;
     ULONG64 available_pagefile_mb;
     ULONG64 gc_index;
     int fgm;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign2;
+#endif
     ULONG64 size;
     BOOL loh_p;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD dummyalign3;
+#endif
 
     HRESULT Request(ISOSDacInterface *sos)
     {
@@ -816,6 +882,9 @@ struct DacpGcHeapAnalyzeData
     CLRDATA_ADDRESS internal_root_array;
     ULONG64         internal_root_array_index;
     BOOL            heap_analyze_success;
+#if defined(_TARGET_X86_UNIX_)
+    BOOL            dummyalign1;
+#endif
 
     // Use this for workstation mode (DacpGcHeapDat.bServerMode==FALSE).
     HRESULT Request(ISOSDacInterface *sos)
@@ -840,19 +909,31 @@ struct DacpSyncBlockData : ZeroInit<DacpSyncBlockData>
 {        
     CLRDATA_ADDRESS Object;
     BOOL            bFree; // if set, no other fields are useful
-    
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
+
     // fields below provide data from this, so it's just for display
     CLRDATA_ADDRESS SyncBlockPointer;
     DWORD           COMFlags;
     UINT            MonitorHeld;
     UINT            Recursion;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign2;
+#endif
     CLRDATA_ADDRESS HoldingThread;
     UINT            AdditionalThreadCount;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign3;
+#endif
     CLRDATA_ADDRESS appDomainPtr;
-    
+
     // SyncBlockCount will always be filled in with the number of SyncBlocks.
     // SyncBlocks may be requested from [1,SyncBlockCount]
     UINT            SyncBlockCount;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign4;
+#endif
 
     // SyncBlockNumber must be from [1,SyncBlockCount]    
     // If there are no SyncBlocks, a call to Request with SyncBlockCount = 1
@@ -886,16 +967,28 @@ enum EHClauseType {EHFault, EHFinally, EHFilter, EHTyped, EHUnknown};
 struct DACEHInfo : ZeroInit<DACEHInfo>
 {
     EHClauseType clauseType;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     CLRDATA_ADDRESS tryStartOffset;
     CLRDATA_ADDRESS tryEndOffset;
     CLRDATA_ADDRESS handlerStartOffset;
     CLRDATA_ADDRESS handlerEndOffset;
     BOOL isDuplicateClause;
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyqalign2;
+#endif
     CLRDATA_ADDRESS filterOffset;   // valid when clauseType is EHFilter
     BOOL isCatchAllHandler;             // valid when clauseType is EHTyped
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign3;
+#endif
     CLRDATA_ADDRESS moduleAddr;    // when == 0 mtCatch contains a MethodTable, when != 0 tokCatch contains a type token
     CLRDATA_ADDRESS mtCatch;   // the method table of the TYPED clause type
     mdToken tokCatch;          // the type token of the TYPED clause type
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign4;
+#endif
 };
 
 struct DacpGetModuleAddress : ZeroInit<DacpGetModuleAddress>
@@ -941,6 +1034,9 @@ struct DacpJitManagerInfo : ZeroInit<DacpJitManagerInfo>
 {
     CLRDATA_ADDRESS managerAddr;
     DWORD codeType; // for union below
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
     CLRDATA_ADDRESS ptrHeapList;    // A HeapList * if IsMiIL(codeType)
 };
 
@@ -949,6 +1045,9 @@ enum CodeHeapType {CODEHEAP_LOADER=0,CODEHEAP_HOST,CODEHEAP_UNKNOWN};
 struct DacpJitCodeHeapInfo : ZeroInit<DacpJitCodeHeapInfo>
 {
     DWORD codeHeapType; // for union below
+#if defined(_TARGET_X86_UNIX_)
+    DWORD           dummyalign1;
+#endif
 
     union
     {

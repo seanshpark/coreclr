@@ -372,6 +372,7 @@ CPFH_AdjustContextForThreadSuspensionRace(CONTEXT *pContext, Thread *pThread)
     WRAPPER_NO_CONTRACT;
 
     PCODE f_IP = GetIP(pContext);
+#if !defined(PLATFORM_UNIX)
     if (Thread::IsAddrOfRedirectFunc((PVOID)f_IP)) {
 
         // This is a very rare case where we tried to redirect a thread that was
@@ -384,6 +385,7 @@ CPFH_AdjustContextForThreadSuspensionRace(CONTEXT *pContext, Thread *pThread)
         SetIP(pContext, GetIP(pThread->GetSavedRedirectContext()));
         STRESS_LOG1(LF_EH, LL_INFO100, "CPFH_AdjustContextForThreadSuspensionRace: Case 1 setting IP = %x\n", pContext->Eip);
     }
+#endif
 
     if (f_IP == GetEEFuncEntryPoint(THROW_CONTROL_FOR_THREAD_FUNCTION)) {
 
@@ -417,11 +419,13 @@ CPFH_AdjustContextForThreadSuspensionRace(CONTEXT *pContext, Thread *pThread)
 // Fortunately, this only occurs in cases where it's ok
 // to skip. The debugger will recognize the patch and handle it.
 
+#if !defined(PLATFORM_UNIX)
     if (Thread::IsAddrOfRedirectFunc((PVOID)(f_IP + 1))) {
         _ASSERTE(pThread->GetSavedRedirectContext());
         SetIP(pContext, GetIP(pThread->GetSavedRedirectContext()) - 1);
         STRESS_LOG1(LF_EH, LL_INFO100, "CPFH_AdjustContextForThreadSuspensionRace: Case 3 setting IP = %x\n", pContext->Eip);
     }
+#endif
 
     if (f_IP + 1 == GetEEFuncEntryPoint(THROW_CONTROL_FOR_THREAD_FUNCTION)) {
         SetIP(pContext, GetIP(pThread->m_OSContext) - 1);
@@ -431,6 +435,7 @@ CPFH_AdjustContextForThreadSuspensionRace(CONTEXT *pContext, Thread *pThread)
 #endif // FEATURE_HIJACK
 
 
+#if defined(WIN32)
 // We want to leave true null reference exceptions alone.  But if we are
 // trashing memory, we don't want the application to swallow it.  The 0x100
 // below will give us false positives for debugging, if the app is accessing
@@ -443,6 +448,7 @@ CPFH_ShouldIgnoreException(EXCEPTION_RECORD *pExceptionRecord) {
     LIMITED_METHOD_CONTRACT;
      return FALSE;
 }
+#endif
 
 static inline void
 CPFH_UpdatePerformanceCounters() {
@@ -579,7 +585,12 @@ EXCEPTION_DISPOSITION ClrDebuggerDoUnwindAndIntercept(EXCEPTION_REGISTRATION_REC
     LOG((LF_EH|LF_CORDB, LL_INFO100, "\t\t: pFunc is 0x%X\n", tct.pFunc));
     LOG((LF_EH|LF_CORDB, LL_INFO100, "\t\t: pStack is 0x%X\n", tct.pStack));
 
+#ifndef FEATURE_PAL
     CallRtlUnwindSafe(pEstablisherFrame, RtlUnwindCallback, pExceptionRecord, 0);
+#else
+    RtlUnwindCallback(); // to squeltch "error: unused function 'RtlUnwindCallback'"
+    __asm { int3 }
+#endif
 
     ExInfo* pExInfo = pThread->GetExceptionState()->GetCurrentExceptionTracker();
     if (pExInfo->m_ValidInterceptionContext)
@@ -1157,9 +1168,11 @@ CPFH_RealFirstPassHandler(                  // ExceptionContinueSearch, etc.
     {
         _ASSERTE(pExInfo->m_pPrevNestedInfo != NULL);
         
+#ifndef FEATURE_PAL
         BEGIN_SO_INTOLERANT_CODE(GetThread());
         SetStateForWatsonBucketing(bRethrownException, pExInfo->GetPreviousExceptionTracker()->GetThrowableAsHandle());
         END_SO_INTOLERANT_CODE;
+#endif
     }
 
 #ifdef DEBUGGING_SUPPORTED
@@ -1262,8 +1275,12 @@ CPFH_RealFirstPassHandler(                  // ExceptionContinueSearch, etc.
 
     LOG((LF_EH, LL_INFO100, "CPFH_RealFirstPassHandler: handler found: %s\n", tct.pFunc->m_pszDebugMethodName));
 
+#if defined(WIN32)
     CallRtlUnwindSafe(pEstablisherFrame, RtlUnwindCallback, pExceptionRecord, 0);
     // on x86 at least, RtlUnwind always returns
+#else
+    __asm { int3 }
+#endif
 
     // Note: we've completed the unwind pass up to the establisher frame, and we're headed off to finish our
     // cleanup and end up back in jitted code. Any more FS0 handlers pushed from this point on out will _not_ be
@@ -2017,12 +2034,16 @@ PEXCEPTION_REGISTRATION_RECORD GetCurrentSEHRecord()
 
 PEXCEPTION_REGISTRATION_RECORD GetFirstCOMPlusSEHRecord(Thread *pThread) {
     WRAPPER_NO_CONTRACT;
+#ifndef FEATURE_PAL
     EXCEPTION_REGISTRATION_RECORD *pEHR = *(pThread->GetExceptionListPtr());
     if (pEHR == EXCEPTION_CHAIN_END || IsUnmanagedToManagedSEHHandler(pEHR)) {
         return pEHR;
     } else {
         return GetNextCOMPlusSEHRecord(pEHR);
     }
+#else
+    __asm { int3 }
+#endif
 }
 
 
@@ -2047,8 +2068,10 @@ PEXCEPTION_REGISTRATION_RECORD GetPrevSEHRecord(EXCEPTION_REGISTRATION_RECORD *n
 
 VOID SetCurrentSEHRecord(EXCEPTION_REGISTRATION_RECORD *pSEH)
 {
+#ifndef FEATURE_PAL
     WRAPPER_NO_CONTRACT;
     *GetThread()->GetExceptionListPtr() = pSEH;
+#endif
 }
 
 
@@ -2107,12 +2130,16 @@ BOOL PopNestedExceptionRecords(LPVOID pTargetSP, BOOL bCheckForUnknownHandlers)
         static HINSTANCE ExecuteHandler2Module = 0;
         static BOOL ExecuteHandler2ModuleInited = FALSE;
 
+#ifndef FEATURE_PAL
         // Cache the handle to the dll with the handler pushed by ExecuteHandler2.
         if (!ExecuteHandler2ModuleInited)
         {
             ExecuteHandler2Module = WszGetModuleHandle(W("ntdll.dll"));
             ExecuteHandler2ModuleInited = TRUE;
         }
+#else
+        __asm { int3 }
+#endif
 
         if (bCheckForUnknownHandlers)
         {
@@ -2604,9 +2631,9 @@ StackWalkAction COMPlusThrowCallback(       // SWA value
         // EX_CATCH just above us.  If not, the exception
         if (   IsFilterHandler(&EHClause)
             && (   offs > EHClause.FilterOffset
-                || offs == EHClause.FilterOffset && !start_adjust)
+                || (offs == EHClause.FilterOffset && !start_adjust))
             && (   offs < EHClause.HandlerStartPC
-                || offs == EHClause.HandlerStartPC && !end_adjust)) {
+                || (offs == EHClause.HandlerStartPC && !end_adjust))) {
 
             STRESS_LOG4(LF_EH, LL_INFO100, "COMPlusThrowCallback: Fault inside filter [%d,%d] startAdj %d endAdj %d\n",
                         EHClause.FilterOffset, EHClause.HandlerStartPC, start_adjust, end_adjust);
@@ -2978,9 +3005,9 @@ StackWalkAction COMPlusUnwindCallback (CrawlFrame *pCf, ThrowCallbackType *pData
 
         if (   IsFilterHandler(&EHClause)
             && (   offs > EHClause.FilterOffset
-                || offs == EHClause.FilterOffset && !start_adjust)
+                || (offs == EHClause.FilterOffset && !start_adjust))
             && (   offs < EHClause.HandlerStartPC
-                || offs == EHClause.HandlerStartPC && !end_adjust)
+                || (offs == EHClause.HandlerStartPC && !end_adjust))
             ) {
             STRESS_LOG4(LF_EH, LL_INFO100, "COMPlusUnwindCallback: Fault inside filter [%d,%d] startAdj %d endAdj %d\n",
                         EHClause.FilterOffset, EHClause.HandlerStartPC, start_adjust, end_adjust);

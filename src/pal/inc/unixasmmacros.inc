@@ -30,8 +30,12 @@
 
 #if defined(_AMD64_)
 #include "unixasmmacrosamd64.inc"
+#elif defined(_X86_)
+#include "unixasmmacrosx86.inc"
 #elif defined(_ARM_)
 #include "unixasmmacrosarm.inc"
 #elif defined(_ARM64_)
 #include "unixasmmacrosarm64.inc"
+#elif
+#error "Unsupported arch"
 #endif

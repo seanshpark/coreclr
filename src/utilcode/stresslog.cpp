@@ -22,7 +22,7 @@ HANDLE StressLogChunk::s_LogChunkHeap = NULL;
 #endif // !STRESS_LOG_READONLY
 
 /*********************************************************************************/
-#if defined(_TARGET_X86_)
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 /* This is like QueryPerformanceCounter but a lot faster.  On machines with 
    variable-speed CPUs (for power management), this is not accurate, but may
@@ -51,7 +51,7 @@ unsigned __int64 getTimeStamp() {
 
 #endif // _TARGET_X86_ 
 
-#if defined(_TARGET_X86_)
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 /*********************************************************************************/
 /* Get the the frequency cooresponding to 'getTimeStamp'.  For x86, this is the

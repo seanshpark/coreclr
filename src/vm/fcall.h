@@ -370,7 +370,7 @@ LPVOID __FCThrowArgument(LPVOID me, enum RuntimeExceptionKind reKind, LPCWSTR ar
 #define F_CALL_VA_CONV __cdecl
 
 
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 // Choose the appropriate calling convention for FCALL helpers on the basis of the JIT calling convention
 #ifdef __GNUC__
@@ -967,7 +967,7 @@ public:
 #endif
 
 
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 #if defined(__GNUC__)
 
@@ -1109,7 +1109,7 @@ public:
     // they do not remember the function they come from. Thus they will not
     // show up in a stack trace.  This is what you want for JIT helpers and the like
 
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 #if defined(__GNUC__)
 

@@ -17,8 +17,12 @@
 #include "sos_md.h"
 
 #ifdef SOS_TARGET_X86
+
+#if !defined(_TARGET_X86_UNIX_)
 namespace X86GCDump
 {
+#endif // !_TARGET_X86_UNIX_
+
 #include "gcdump.h"
 #undef assert
 #define assert(a)
@@ -41,7 +45,14 @@ namespace X86GCDump
 
 #include "gcdump.cpp"
 #include "i386/gcdumpx86.cpp"
+
+#if !defined(_TARGET_X86_UNIX_)
 }
+#endif // !_TARGET_X86_UNIX_
+#if defined(_TARGET_X86_UNIX_)
+#define X86GCDump
+#endif
+
 #endif // SOS_TARGET_X86
 
 #ifdef SOS_TARGET_AMD64 

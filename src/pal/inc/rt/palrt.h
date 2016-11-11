@@ -1232,7 +1232,7 @@ typedef VOID (__stdcall *WAITORTIMERCALLBACK)(PVOID, BOOLEAN);
 // The message in these two macros should not contain any keywords like TODO
 // or NYI. It should be just the brief description of the problem.
 
-#if defined(_TARGET_X86_)
+#if defined(_TARGET_X86_) && defined(WIN32)
 // Finished ports - compile-time errors
 #define PORTABILITY_WARNING(message)    NEED_TO_PORT_THIS_ONE(NEED_TO_PORT_THIS_ONE)
 #define PORTABILITY_ASSERT(message)     NEED_TO_PORT_THIS_ONE(NEED_TO_PORT_THIS_ONE)
@@ -1571,6 +1571,24 @@ typedef struct _DISPATCHER_CONTEXT {
     ULONG64 Reserved;
 } DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
 
+#elif defined(_X86_)
+
+typedef struct _DISPATCHER_CONTEXT {
+    DWORD ControlPc;
+    DWORD ImageBase;
+    PRUNTIME_FUNCTION FunctionEntry;
+    DWORD EstablisherFrame;
+    DWORD TargetPc;
+    PCONTEXT ContextRecord;
+    PEXCEPTION_ROUTINE LanguageHandler;
+    PVOID HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    DWORD ScopeIndex;
+    BOOLEAN ControlPcIsUnwound;
+    PBYTE  NonVolatileRegisters;
+    DWORD Reserved;
+} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
 #else
 
 typedef struct _DISPATCHER_CONTEXT {
@@ -1599,6 +1617,12 @@ typedef DISPATCHER_CONTEXT *PDISPATCHER_CONTEXT;
 
 typedef struct _EXCEPTION_REGISTRATION_RECORD EXCEPTION_REGISTRATION_RECORD;
 typedef EXCEPTION_REGISTRATION_RECORD *PEXCEPTION_REGISTRATION_RECORD;
+
+typedef struct _EXCEPTION_REGISTRATION_RECORD
+{
+     PEXCEPTION_REGISTRATION_RECORD Next;
+     PEXCEPTION_ROUTINE Handler;
+} EXCEPTION_REGISTRATION_RECORD, *PEXCEPTION_REGISTRATION_RECORD;
 
 typedef LPVOID HKEY;
 typedef LPVOID PACL;

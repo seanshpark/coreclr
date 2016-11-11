@@ -40,7 +40,9 @@ extern "C" {
 #ifdef __i386__
 
 #if !defined(__stdcall)
-#define __stdcall      __attribute__((stdcall))
+// #define __stdcall      __attribute__((stdcall))
+// variadic cannot be stdcall.
+#define __stdcall
 #endif
 #if !defined(_stdcall)
 #define _stdcall       __stdcall

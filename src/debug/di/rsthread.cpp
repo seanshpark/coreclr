@@ -1491,9 +1491,18 @@ void CordbThread::Get32bitFPRegisters(CONTEXT * pContext)
 
     unsigned int i;
 
+#if defined(_TARGET_X86_UNIX_)
+    __asm int3;
+    // need to check below "__asm fstp td"
+#endif
+
     for (i = 0; i <= floatStackTop; i++)
     {
+#if defined(_TARGET_X86_UNIX_)
+        double td = 0.0;
+#else
         long double td;
+#endif
         __asm fstp td // copy out the double
         m_floatValues[i] = td;
     }

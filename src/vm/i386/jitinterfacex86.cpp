@@ -78,6 +78,8 @@ extern "C" void STDCALL WriteBarrierAssert(BYTE* ptr, Object* obj)
 /* note that we can do almost as well in portable code, but this
    squezes the last little bit of perf out */
 
+#if defined(_MSC_VER)
+
 __declspec(naked) void F_CALL_CONV JIT_Stelem_Ref(PtrArray* array, unsigned idx, Object* val)
 {
     STATIC_CONTRACT_SO_TOLERANT;
@@ -198,11 +200,148 @@ Epilog:
     }
 }
 
+#else // _MSC_VER
+
+// AUXFLAG_APP_DOMAIN_AGILE                = 0x00000001,
+// AUXFLAG_CHECK_APP_DOMAIN_AGILE          = 0x00000002,
+__declspec(naked) void F_CALL_CONV JIT_Stelem_Ref(PtrArray* array, unsigned idx, Object* val)
+{
+    STATIC_CONTRACT_SO_TOLERANT;
+    STATIC_CONTRACT_THROWS;
+    STATIC_CONTRACT_GC_TRIGGERS;
+
+#define CanCast 1
+#define EEClassFlags 3
+
+/*
+    __asm {
+
+        mov     EAX, [ESP+4]        // EAX = val
+
+        test    ECX, ECX
+        je      ThrowNullReferenceException
+
+        cmp     EDX, [ECX+4];       // test if in bounds
+        jae     ThrowIndexOutOfRangeException
+
+        test    EAX, EAX
+        jz      Assigning0
+
+#if CHECK_APP_DOMAIN_LEAKS 
+        mov     EAX, [g_pConfig]
+        movzx   EAX, BYTE PTR [EAX]EEConfig.fAppDomainLeaks;
+        test    EAX, EAX
+        jz      NoCheck
+        // Check if the instance is agile or check agile
+        mov     EAX, [ECX]
+
+        // TODO: FIX THIS
+        // mov EAX, [EAX]MethodTable..m_ElementTypeHnd
+        int3
+
+        test    EAX, 2              // Check for non-MT
+        jnz     NoCheck
+        // Check VMflags of element type
+
+        // TODO: FIX THIS
+        /// mov EAX, [EAX]MethodTable.m_pEEClass
+        // mov EAX, dword ptr [EAX]EEClass.m_wAuxFlags
+        int3
+
+        test    EAX, EEClassFlags
+        jnz     NeedFrame           // Jump to the generic case so we can do an app domain check
+ NoCheck:
+        mov     EAX, [ESP+4]        // EAX = val
+#endif // CHECK_APP_DOMAIN_LEAKS
+
+        push    EDX
+        mov     EDX, [ECX]
+
+        // TODO: FIX THIS
+        // mov EDX, [EDX]MethodTable.m_ElementTypeHnd
+        int3
+
+        cmp     EDX, [EAX]          // do we have an exact match
+        jne     NotExactMatch
+
+DoWrite2:
+        pop     EDX
+        lea     EDX, [ECX + 4*EDX + 8]
+        call    JIT_WriteBarrierEAX
+        ret     4
+
+Assigning0:
+        // write barrier is not necessary for assignment of NULL references
+        mov     [ECX + 4*EDX + 8], EAX
+        ret     4
+
+DoWrite:
+        mov     EAX, [ESP + 4]      // EAX = val
+        lea     EDX, [ECX + 4*EDX + 8]
+        call    JIT_WriteBarrierEAX
+        ret     4
+
+NotExactMatch:
+        cmp     EDX, [g_pObjectClass]   // are we assigning to Array of objects
+        je  DoWrite2
+
+        // push EDX                 // caller-save ECX and EDX
+        push    ECX
+
+        push    EDX                 // element type handle
+        push    EAX                 // object
+
+        call    ObjIsInstanceOfNoGC
+
+        pop     ECX                 // caller-restore ECX and EDX
+        pop     EDX
+
+        cmp     EAX, CanCast
+        je      DoWrite
+
+#if CHECK_APP_DOMAIN_LEAKS
+NeedFrame:
+#endif
+        // Call the helper that knows how to erect a frame
+        push    EDX
+        push    ECX
+
+        lea     ECX, [ESP+8+4]      // ECX = address of object being stored
+        lea     EDX, [ESP]          // EDX = address of array
+
+        call    ArrayStoreCheck
+
+        pop     ECX                 // these might have been updated!
+        pop     EDX
+
+        cmp     EAX, EAX            // set zero flag
+        jnz     Epilog              // This jump never happens, it keeps the epilog walker happy
+
+        jmp     DoWrite
+
+ThrowNullReferenceException:
+        mov     ECX, CORINFO_NullReferenceException
+        jmp     Throw
+
+ThrowIndexOutOfRangeException:
+        mov     ECX, CORINFO_IndexOutOfRangeException
+
+Throw:
+        call    JIT_InternalThrowFromHelper
+Epilog:
+        ret     4
+    }
+*/
+}
+#endif
+
 extern "C" __declspec(naked) Object* F_CALL_CONV JIT_IsInstanceOfClass(MethodTable *pMT, Object *pObject)
 {
     STATIC_CONTRACT_SO_TOLERANT;
     STATIC_CONTRACT_THROWS;
     STATIC_CONTRACT_GC_TRIGGERS;
+
+#if !defined(_TARGET_X86_UNIX_)
 
 #if defined(FEATURE_TYPEEQUIVALENCE) || defined(FEATURE_REMOTING)
     enum
@@ -242,7 +381,7 @@ extern "C" __declspec(naked) Object* F_CALL_CONV JIT_IsInstanceOfClass(MethodTab
     // Check if the instance is a proxy.
 #if defined(FEATURE_TYPEEQUIVALENCE) || defined(FEATURE_REMOTING)
         mov             eax, [ARGUMENT_REG2]
-        test            dword ptr [eax]MethodTable.m_dwFlags, MTEquivalenceFlags
+        test            dword ptr [eax]MethodTable.m_dwFlags, 0x02000000 // MTEquivalenceFlags
         jne             SlowPath
 #endif
     // It didn't match and it isn't a proxy and it doesn't have type equivalence
@@ -253,8 +392,9 @@ extern "C" __declspec(naked) Object* F_CALL_CONV JIT_IsInstanceOfClass(MethodTab
 #if defined(FEATURE_TYPEEQUIVALENCE) || defined(FEATURE_REMOTING)
     SlowPath:
         jmp             JITutil_IsInstanceOfAny
-#endif            
+#endif
     }
+#endif // !_TARGET_X86_UNIX_
 }
 
 extern "C" __declspec(naked) Object* F_CALL_CONV JIT_ChkCastClass(MethodTable *pMT, Object *pObject)

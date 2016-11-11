@@ -11,7 +11,9 @@
  * to the standard code-manager spec.
  */
 
+#ifdef WIN32
 #include "utilcode.h"           // For _ASSERTE()
+#endif
 #include "gcdump.h"
 
 /*****************************************************************************/

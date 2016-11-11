@@ -42,18 +42,31 @@
    
 #if !defined(DACCESS_COMPILE)
 
+#if defined(WIN32)
 #pragma optimize("gsy", on )        // optimize to insure that code generation does not have junk in it
-#pragma warning(disable:4717) 
+#pragma warning(disable:4717)
+#endif
 
 static int __stdcall zeroFtn() {
     return 0;
 }
 
+#if defined(WIN32)
 static int __stdcall recursiveFtn() {
     return recursiveFtn()+1;
 }
+#else
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winfinite-recursion"
+static int __stdcall recursiveFtn() {
+    return recursiveFtn()+1;
+}
+#pragma clang diagnostic pop
+#endif
 
+#if defined(WIN32)
 #pragma optimize("", on )
+#endif
 
 
 /* Has mscorwks been instrumented so that calls are morphed into push XXXX call <helper> */
@@ -1108,10 +1121,17 @@ void LazyMachState::unwindLazyState(LazyMachState* baseState,
                     goto again;
                 }
 #ifndef _PREFIX_
+#if defined(_TARGET_X86_UNIX_)
+                __asm
+                {
+                    int3
+                }
+#else
                 *((int*) 0) = 1;        // If you get at this error, it is because yout
                                         // set a breakpoint in a helpermethod frame epilog
                                         // you can't do that unfortunately.  Just move it
                                         // into the interior of the method to fix it  
+#endif
 #endif // !_PREFIX_
                 goto done;
 #endif //!DACCESS_COMPILE
@@ -1225,7 +1245,14 @@ void LazyMachState::unwindLazyState(LazyMachState* baseState,
                 // FIX what to do here?
 #ifndef DACCESS_COMPILE
 #ifndef _PREFIX_
+#if defined(_TARGET_X86_UNIX_)
+                __asm
+                {
+                    int3
+                }
+#else
                 *((unsigned __int8**) 0) = ip;  // cause an access violation (Free Build assert)
+#endif
 #endif // !_PREFIX_                            
 #else
                 DacNotImpl();

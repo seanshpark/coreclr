@@ -71,7 +71,8 @@ typedef DPTR(struct CORCOMPILE_VIRTUAL_SECTION_INFO)
 typedef DPTR(struct CORCOMPILE_IMPORT_SECTION)
     PTR_CORCOMPILE_IMPORT_SECTION;
 
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_)
+#if defined(WIN32)
 //
 // x86 ABI does not define RUNTIME_FUNCTION. Define our own to allow unification between x86 and other platforms.
 //
@@ -79,6 +80,8 @@ typedef struct _RUNTIME_FUNCTION {
     DWORD BeginAddress;
     DWORD UnwindData;
 } RUNTIME_FUNCTION, *PRUNTIME_FUNCTION;
+
+#endif // defined(WIN32)
 
 typedef DPTR(RUNTIME_FUNCTION) PTR_RUNTIME_FUNCTION;
 

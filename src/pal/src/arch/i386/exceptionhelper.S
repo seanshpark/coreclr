@@ -2,7 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if defined(_AMD64_)
 .intel_syntax noprefix
+#endif
 #include "unixasmmacros.inc"
 #include "asmconstants.h"
 
@@ -14,6 +16,7 @@
 // Then it uses the ThrowExceptionHelper to throw the passed in exception from that context.
 // EXTERN_C void ThrowExceptionFromContextInternal(CONTEXT* context, PAL_SEHException* ex);
 LEAF_ENTRY ThrowExceptionFromContextInternal, _TEXT
+#if defined(_TARGET_AMD64_)
         // Save the RBP to the stack so that the unwind can work at the instruction after
         // loading the RBP from the context, but before loading the RSP from the context.
         push_nonvol_reg rbp
@@ -39,4 +42,28 @@ LEAF_ENTRY ThrowExceptionFromContextInternal, _TEXT
         // The PAL_SEHException pointer
         mov     rdi, rsi 
         jmp     EXTERNAL_C_FUNC(ThrowExceptionHelper)
+#else
+        int3
+/*
+        push_nonvol_reg ebp
+        mov     ebx, [edi + CONTEXT_Ebx]
+        mov     ebp, [edi + CONTEXT_Ebp]
+        mov     esp, [edi + CONTEXT_Esp]
+        // The ESP was set to the target frame's value, so the current function's
+        // CFA is now right at the ESP.
+        .cfi_def_cfa_offset 0
+
+        // Indicate that now that we have moved the RSP to the target address,
+        // the RBP is no longer saved in the current stack frame.
+        .cfi_restore ebp
+
+        mov     eax, [edi + CONTEXT_Eip]
+
+        // Store return address to the stack
+        push_register eax
+        // The PAL_SEHException pointer
+        mov     edi, esi
+        jmp     EXTERNAL_C_FUNC(ThrowExceptionHelper)
+*/
+#endif
 LEAF_END ThrowExceptionFromContextInternal, _TEXT

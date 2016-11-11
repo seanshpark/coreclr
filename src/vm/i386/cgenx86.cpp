@@ -1611,7 +1611,11 @@ VOID __cdecl PopSEHRecords(LPVOID pTargetSP)
         jmp     poploop
   done:
         mov     fs:[0], eax
+#if defined(_TARGET_X86_UNIX_)
+        int3
+#else
         retn
+#endif
     }
 }
 
@@ -1679,9 +1683,9 @@ void ResumeAtJit(PCONTEXT pContext, LPVOID oldESP)
 #pragma warning (default : 4731)
 #endif // !EnC_SUPPORTED
 
-
 #pragma warning(push)
 #pragma warning(disable: 4035)
+#if defined(WIN32)
 extern "C" DWORD __stdcall getcpuid(DWORD arg, unsigned char result[16])
 {
     LIMITED_METHOD_CONTRACT
@@ -1750,6 +1754,7 @@ extern "C" DWORD __stdcall xmmYmmStateSupport()
     done:
     }
 }
+#endif
 
 #pragma warning(pop)
 
@@ -1784,11 +1789,12 @@ DWORD GetLogicalCpuCount()
         unsigned char buffer[16];
 
         DWORD maxCpuId = getcpuid(0, buffer);
+        DWORD* dwBuffer;
 
         if (maxCpuId < 1)
             goto lDone;
 
-        DWORD* dwBuffer = (DWORD*)buffer;
+        dwBuffer = (DWORD*)buffer;
 
         if (dwBuffer[1] == 'uneG') {
             if (dwBuffer[3] == 'Ieni') {

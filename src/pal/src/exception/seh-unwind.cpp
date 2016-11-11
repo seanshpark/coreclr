@@ -57,6 +57,12 @@ Abstract:
     ASSIGN_REG(R13)        \
     ASSIGN_REG(R14)        \
     ASSIGN_REG(R15)
+#elif defined(_X86_)
+#define ASSIGN_UNWIND_REGS \
+    ASSIGN_REG(Eip)        \
+    ASSIGN_REG(Esp)        \
+    ASSIGN_REG(Ebp)        \
+    ASSIGN_REG(Ebx)
 #elif defined(_ARM64_)
 #define ASSIGN_UNWIND_REGS \
     ASSIGN_REG(Pc)         \
@@ -137,6 +143,11 @@ static void UnwindContextToWinContext(unw_cursor_t *cursor, CONTEXT *winContext)
     unw_get_reg(cursor, UNW_X86_64_R13, (unw_word_t *) &winContext->R13);
     unw_get_reg(cursor, UNW_X86_64_R14, (unw_word_t *) &winContext->R14);
     unw_get_reg(cursor, UNW_X86_64_R15, (unw_word_t *) &winContext->R15);
+#elif defined(_X86_)
+    unw_get_reg(cursor, UNW_REG_IP, (unw_word_t *) &winContext->Eip);
+    unw_get_reg(cursor, UNW_REG_SP, (unw_word_t *) &winContext->Esp);
+    unw_get_reg(cursor, UNW_X86_EBP, (unw_word_t *) &winContext->Ebp);
+    unw_get_reg(cursor, UNW_X86_EBX, (unw_word_t *) &winContext->Ebx);
 #elif defined(_ARM_)
     unw_get_reg(cursor, UNW_REG_SP, (unw_word_t *) &winContext->Sp);
     unw_get_reg(cursor, UNW_REG_IP, (unw_word_t *) &winContext->Pc);
@@ -196,6 +207,9 @@ static void GetContextPointers(unw_cursor_t *cursor, unw_context_t *unwContext, 
     GetContextPointer(cursor, unwContext, UNW_X86_64_R13, &contextPointers->R13);
     GetContextPointer(cursor, unwContext, UNW_X86_64_R14, &contextPointers->R14);
     GetContextPointer(cursor, unwContext, UNW_X86_64_R15, &contextPointers->R15);
+#elif defined(_X86_)
+    GetContextPointer(cursor, unwContext, UNW_X86_EBP, &contextPointers->Ebp);
+    GetContextPointer(cursor, unwContext, UNW_X86_EBX, &contextPointers->Ebx);
 #elif defined(_ARM_)
     GetContextPointer(cursor, unwContext, UNW_ARM_R4, &contextPointers->R4);
     GetContextPointer(cursor, unwContext, UNW_ARM_R5, &contextPointers->R5);
@@ -390,6 +404,11 @@ static int access_reg(unw_addr_space_t as, unw_regnum_t regnum, unw_word_t *valp
         case UNW_X86_64_R13:   *valp = (unw_word_t) winContext->R13; break;
         case UNW_X86_64_R14:   *valp = (unw_word_t) winContext->R14; break;
         case UNW_X86_64_R15:   *valp = (unw_word_t) winContext->R15; break;
+#elif defined(_X86_)
+        case UNW_REG_IP:       *valp = (unw_word_t) winContext->Eip; break;
+        case UNW_REG_SP:       *valp = (unw_word_t) winContext->Esp; break;
+        case UNW_X86_EBP:      *valp = (unw_word_t) winContext->Ebp; break;
+        case UNW_X86_EBX:      *valp = (unw_word_t) winContext->Ebx; break;
 #elif defined(_ARM_)
         case UNW_ARM_R13:      *valp = (unw_word_t) winContext->Sp; break;
         case UNW_ARM_R14:      *valp = (unw_word_t) winContext->Lr; break;

@@ -76,7 +76,7 @@ BOOL LoadDynamicInfoEntry(Module *currentModule,
 //
 // The legacy x86 monitor helpers do not need a state argument
 //
-#if !defined(_TARGET_X86_)
+#if !(defined(_TARGET_X86_) && defined(WIN32))
 
 #define FCDECL_MONHELPER(funcname, arg) FCDECL2(void, funcname, arg, BYTE* pbLockTaken)
 #define HCIMPL_MONHELPER(funcname, arg) HCIMPL2(void, funcname, arg, BYTE* pbLockTaken)

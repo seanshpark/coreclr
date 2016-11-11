@@ -74,7 +74,7 @@ void GetStringFromStackLevels(UINT ifrStart, UINT cfrTotal, __out_ecount(cchMaxA
 ******************************************************************** robch */
 void GetStringFromAddr(DWORD_PTR dwAddr, __out_ecount(cchMaxAssertStackLevelStringLen) LPSTR szString);
 
-#if defined(_TARGET_X86_) && defined(FEATURE_CORECLR)
+#if defined(_TARGET_X86_) && defined(WIN32) && defined(FEATURE_CORECLR)
 /****************************************************************************
 * ClrCaptureContext *
 *-------------------*

@@ -2535,7 +2535,7 @@ VOID StubLinkerCPU::X86EmitCurrentAppDomainFetch(X86Reg dstreg, unsigned preserv
 #endif // FEATURE_IMPLICIT_TLS
 }
 
-#ifdef _TARGET_X86_
+#if defined(_TARGET_X86_) && defined(WIN32)
 
 #ifdef PROFILING_SUPPORTED
 VOID StubLinkerCPU::EmitProfilerComCallProlog(TADDR pFrameVptr, X86Reg regFrame)

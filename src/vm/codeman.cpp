@@ -1643,7 +1643,7 @@ BOOL EEJitManager::LoadJIT()
     // Set as a courtesy to code:CorCompileGetRuntimeDll
     s_ngenCompilerDll = m_JITCompiler;
 
-#if (defined(_TARGET_AMD64_) && !defined(CROSSGEN_COMPILE) && !defined(FEATURE_CORECLR)) || (defined(_TARGET_X86_) && defined(FEATURE_CORECLR))
+#if (defined(_TARGET_AMD64_) && !defined(CROSSGEN_COMPILE) && !defined(FEATURE_CORECLR)) || (defined(_TARGET_X86_) && defined(WIN32) && defined(FEATURE_CORECLR))
     // If COMPlus_UseLegacyJit=1, then we fall back to compatjit.dll.
     //
     // This fallback mechanism was introduced for Visual Studio "14" Preview, when JIT64 (the legacy JIT) was replaced with
@@ -1739,7 +1739,7 @@ BOOL EEJitManager::LoadJIT()
             }
         }
     }
-#endif // (defined(_TARGET_AMD64_) && !defined(CROSSGEN_COMPILE) && !defined(FEATURE_CORECLR)) || (defined(_TARGET_X86_) && defined(FEATURE_CORECLR))
+#endif // (defined(_TARGET_AMD64_) && !defined(CROSSGEN_COMPILE) && !defined(FEATURE_CORECLR)) || (defined(_TARGET_X86_) && defined(WIN32) && defined(FEATURE_CORECLR))
 
 #endif // !FEATURE_MERGE_JIT_AND_ENGINE
 
