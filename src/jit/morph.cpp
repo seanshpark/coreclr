@@ -1753,6 +1753,28 @@ void fgArgInfo::ArgsReverseSlots()
         }
     }
 }
+
+// Return number of slots to adjust ESP for callee pop
+unsigned fgArgInfo::GetCalleePop()
+{
+    unsigned curInx;
+    unsigned numSlots = 0;
+
+    for (curInx = 0; curInx < argCount; curInx++)
+    {
+        fgArgTabEntryPtr curArgTabEntry = argTable[curInx];
+        if (curArgTabEntry->numSlots > 0)
+        {
+            // The argument may be REG_STK or constant or register that goes to stack
+            assert(nextSlotNum >= curArgTabEntry->slotNum);
+
+            numSlots += curArgTabEntry->numSlots;
+        }
+    }
+
+    return numSlots;
+}
+
 #else  // FEATURE_FIXED_OUT_ARGS
 //  Get the stack alignment value for a Call holding this object
 //

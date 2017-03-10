@@ -1365,6 +1365,7 @@ public:
     {
         return padStkAlign;
     }
+    unsigned GetCalleePop();
 #endif
     bool HasRegArgs()
     {

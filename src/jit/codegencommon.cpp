@@ -11163,7 +11163,11 @@ unsigned CodeGen::getFirstArgWithStackSlot()
 //
 void CodeGen::genSinglePush()
 {
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+    assert(false);
+#else
     genStackLevel += sizeof(void*);
+#endif
 }
 
 //------------------------------------------------------------------------
@@ -11171,7 +11175,11 @@ void CodeGen::genSinglePush()
 //
 void CodeGen::genSinglePop()
 {
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+    assert(false);
+#else
     genStackLevel -= sizeof(void*);
+#endif
 }
 
 //------------------------------------------------------------------------

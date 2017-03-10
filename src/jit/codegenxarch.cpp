@@ -5191,10 +5191,11 @@ void CodeGen::genCallInstruction(GenTreePtr node)
 
 #if defined(UNIX_X86_ABI)
 #if FEATURE_FIXED_OUT_ARGS
-    // Adjust for callee pop
-    if (argSizeForEmitter > 0)
+    // Adjust stack pointer for callee pop
+    unsigned calleePop = call->fgArgInfo->GetCalleePop();
+    if (calleePop != 0)
     {
-        inst_RV_IV(INS_sub, REG_SPBASE, argSizeForEmitter, EA_PTRSIZE);
+        inst_RV_IV(INS_sub, REG_SPBASE, calleePop * TARGET_POINTER_SIZE, EA_PTRSIZE);
     }
 #else  // FEATURE_FIXED_OUT_ARGS
     // Put back the stack pointer if there was any padding for stack alignment
@@ -7624,7 +7625,9 @@ void CodeGen::genPutArgStkFieldList(GenTreePutArgStk* putArgStk)
     GenTreeFieldList* const fieldList = putArgStk->gtOp1->AsFieldList();
     assert(fieldList != nullptr);
 
-#if !FEATURE_FIXED_OUT_ARGS
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+    unsigned currentOffset = 0; // putArgStk->getArgSize();
+#else
     // Set m_pushStkArg and pre-adjust the stack if necessary.
     const bool preAdjustedStack = genAdjustStackForPutArgStk(putArgStk);
 
@@ -7638,9 +7641,7 @@ void CodeGen::genPutArgStkFieldList(GenTreePutArgStk* putArgStk)
     // in reverse order, so we start with the current field offset at the size of the struct arg (which must be
     // a multiple of the target pointer size).
     unsigned currentOffset = (preAdjustedStack) ? 0 : putArgStk->getArgSize();
-#else
-    unsigned currentOffset = putArgStk->getArgSize();
-#endif // !FEATURE_FIXED_OUT_ARGS
+#endif // UNIX_X86_ABI && FEATURE_FIXED_OUT_ARGS
     unsigned  prevFieldOffset = currentOffset;
     regNumber intTmpReg       = REG_NA;
     regNumber simdTmpReg      = REG_NA;
@@ -7669,7 +7670,9 @@ void CodeGen::genPutArgStkFieldList(GenTreePutArgStk* putArgStk)
         // Long-typed nodes should have been handled by the decomposition pass, and lowering should have sorted the
         // field list in descending order by offset.
         assert(!varTypeIsLong(fieldType));
+#if !FEATURE_FIXED_OUT_ARGS
         assert(fieldOffset <= prevFieldOffset);
+#endif
 
         // Consume the register, if any, for this field. Note that genConsumeRegs() will appropriately
         // update the liveness info for a lclVar that has been marked RegOptional, which hasn't been
@@ -7826,14 +7829,16 @@ void CodeGen::genPutArgStkFieldList(GenTreePutArgStk* putArgStk)
 
         prevFieldOffset = fieldOffset;
     }
-#if !FEATURE_FIXED_OUT_ARGS
+#if FEATURE_FIXED_OUT_ARGS
+    assert(currentOffset == 0);
+#else
     if (currentOffset != 0)
     {
         // We don't expect padding at the beginning of a struct, but it could happen with explicit layout.
         inst_RV_IV(INS_sub, REG_SPBASE, currentOffset, EA_PTRSIZE);
         genStackLevel += currentOffset;
     }
-#endif // !FEATURE_FIXED_OUT_ARGS
+#endif // FEATURE_FIXED_OUT_ARGS
 }
 #endif // _TARGET_X86_
 
