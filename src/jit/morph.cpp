@@ -1709,6 +1709,73 @@ void fgArgInfo::ArgsComplete()
 }
 
 #if defined(UNIX_X86_ABI)
+#if FEATURE_FIXED_OUT_ARGS
+// Reverse slot number for each arguments so that arguments will be placed
+// in the same order when changed from push to move instruction.
+//
+// Notice: It would be better do reverser the order in lowering
+// so that we won't need ArgsReverseSlots()
+void fgArgInfo::ArgsReverseSlots()
+{
+    // To get the padding amount, sum up all the slots and get the remainder for padding
+    unsigned curInx;
+    unsigned numSlots     = 0;
+    unsigned numStackArgs = 0;
+
+    for (curInx = 0; curInx < argCount; curInx++)
+    {
+        fgArgTabEntryPtr curArgTabEntry = argTable[curInx];
+        if (curArgTabEntry->numSlots > 0)
+        {
+            // The argument may be REG_STK or constant or register that goes to stack
+            assert(nextSlotNum >= curArgTabEntry->slotNum);
+
+            numSlots += curArgTabEntry->numSlots;
+            numStackArgs++;
+        }
+    }
+
+    if (numStackArgs > 1)
+    {
+        for (curInx = 0; curInx < argCount; curInx++)
+        {
+            fgArgTabEntryPtr curArgTabEntry = argTable[curInx];
+            if (curArgTabEntry->numSlots > 0)
+            {
+                curArgTabEntry->slotNum = (nextSlotNum - 1) - curArgTabEntry->slotNum;
+                // Consider 2 or more slots used for the argument
+                // For example, if there is 4 arguments with numSlots value 1, 2, 1, 1 each
+                // nextSlotNum will be 5 and slot number will be like this
+                //     before: [O] [1][ ] [3] [4]
+                //      after: [4] [3] [2][ ] [0]
+                curArgTabEntry->slotNum -= (curArgTabEntry->numSlots - 1);
+            }
+        }
+    }
+}
+
+// Return number of slots to adjust ESP for callee pop
+unsigned fgArgInfo::GetCalleePop()
+{
+    unsigned curInx;
+    unsigned numSlots = 0;
+
+    for (curInx = 0; curInx < argCount; curInx++)
+    {
+        fgArgTabEntryPtr curArgTabEntry = argTable[curInx];
+        if (curArgTabEntry->numSlots > 0)
+        {
+            // The argument may be REG_STK or constant or register that goes to stack
+            assert(nextSlotNum >= curArgTabEntry->slotNum);
+
+            numSlots += curArgTabEntry->numSlots;
+        }
+    }
+
+    return numSlots;
+}
+
+#else  // FEATURE_FIXED_OUT_ARGS
 //  Get the stack alignment value for a Call holding this object
 //
 //  NOTE: This function will calculate number of padding slots, to align the
@@ -1752,6 +1819,7 @@ void fgArgInfo::ArgsAlignPadding()
         this->padStkAlign = firstArgTabEntry->padStkAlign;
     }
 }
+#endif // FEATURE_FIXED_OUT_ARGS
 #endif // UNIX_X86_ABI
 
 void fgArgInfo::SortArgs()
@@ -4296,7 +4364,11 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* callNode)
         call->fgArgInfo->ArgsComplete();
 
 #if defined(UNIX_X86_ABI)
+#if FEATURE_FIXED_OUT_ARGS
+        call->fgArgInfo->ArgsReverseSlots();
+#else
         call->fgArgInfo->ArgsAlignPadding();
+#endif // FEATURE_FIXED_OUT_ARGS
 #endif // UNIX_X86_ABI
 
 #ifdef LEGACY_BACKEND

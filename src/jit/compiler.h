@@ -1334,8 +1334,12 @@ public:
     void ArgsComplete();
 
 #if defined(UNIX_X86_ABI)
-    void ArgsAlignPadding();
-#endif
+#if FEATURE_FIXED_OUT_ARGS
+    void ArgsReverseSlots();
+#else
+    void       ArgsAlignPadding();
+#endif // FEATURE_FIXED_OUT_ARGS
+#endif // UNIX_X86_ABI
 
     void SortArgs();
 
@@ -1361,6 +1365,7 @@ public:
     {
         return padStkAlign;
     }
+    unsigned GetCalleePop();
 #endif
     bool HasRegArgs()
     {

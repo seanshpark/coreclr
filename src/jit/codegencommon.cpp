@@ -3927,12 +3927,17 @@ void CodeGen::genGCWriteBarrier(GenTreePtr tgt, GCInfo::WriteBarrierForm wbf)
         }
 #endif // DEBUG
 #endif // 0
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+        printf("NYI\n");
+        assert(false);
+#else
         genStackLevel += 4;
         inst_IV(INS_push, wbKind);
         genEmitHelperCall(helper,
                           4,           // argSize
                           EA_PTRSIZE); // retSize
         genStackLevel -= 4;
+#endif // UNIX_X86_ABI && FEATURE_FIXED_OUT_ARGS
     }
     else
     {
@@ -7500,6 +7505,10 @@ void CodeGen::genProfilingEnterCallback(regNumber initReg, bool* pInitRegZeroed)
     unsigned saveStackLvl2 = genStackLevel;
 
 #if defined(_TARGET_X86_)
+#if FEATURE_FIXED_OUT_ARGS
+    // TODO: Fix here or disable profiler
+    assert(false);
+#else
     // Important note: when you change enter probe layout, you must also update SKIP_ENTER_PROF_CALLBACK()
     // for x86 stack unwinding
 
@@ -7512,6 +7521,7 @@ void CodeGen::genProfilingEnterCallback(regNumber initReg, bool* pInitRegZeroed)
     {
         inst_IV(INS_push, (size_t)compiler->compProfilerMethHnd);
     }
+#endif // !FEATURE_FIXED_OUT_ARGS
 #elif defined(_TARGET_ARM_)
     // On Arm arguments are prespilled on stack, which frees r0-r3.
     // For generating Enter callout we would need two registers and one of them has to be r0 to pass profiler handle.
@@ -7687,6 +7697,10 @@ void CodeGen::genProfilingLeaveCallback(unsigned helper /*= CORINFO_HELP_PROF_FC
 
 #elif defined(_TARGET_X86_)
 
+#if FEATURE_FIXED_OUT_ARGS
+    // TODO: Fix here or disable profiler
+    assert(false);
+#else
     //
     // Push the profilerHandle
     //
@@ -7712,6 +7726,7 @@ void CodeGen::genProfilingLeaveCallback(unsigned helper /*= CORINFO_HELP_PROF_FC
     {
         compiler->fgPtrArgCntMax = 1;
     }
+#endif // FEATURE_FIXED_OUT_ARGS
 
 #elif defined(LEGACY_BACKEND) && defined(_TARGET_ARM_)
 
@@ -11148,7 +11163,11 @@ unsigned CodeGen::getFirstArgWithStackSlot()
 //
 void CodeGen::genSinglePush()
 {
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+    assert(false);
+#else
     genStackLevel += sizeof(void*);
+#endif
 }
 
 //------------------------------------------------------------------------
@@ -11156,7 +11175,11 @@ void CodeGen::genSinglePush()
 //
 void CodeGen::genSinglePop()
 {
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+    assert(false);
+#else
     genStackLevel -= sizeof(void*);
+#endif
 }
 
 //------------------------------------------------------------------------

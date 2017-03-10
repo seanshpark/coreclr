@@ -176,8 +176,10 @@ void genCodeForCpBlkUnroll(GenTreeBlk* cpBlkNode);
 
 #ifdef FEATURE_PUT_STRUCT_ARG_STK
 #ifdef _TARGET_X86_
+#if !FEATURE_FIXED_OUT_ARGS
 bool genAdjustStackForPutArgStk(GenTreePutArgStk* putArgStk);
 void genPushReg(var_types type, regNumber srcReg);
+#endif // !FEATURE_FIXED_OUT_ARGS
 void genPutArgStkFieldList(GenTreePutArgStk* putArgStk);
 #endif // _TARGET_X86_
 
@@ -253,7 +255,9 @@ bool genIsRegCandidateLocal(GenTreePtr tree)
 
 #ifdef FEATURE_PUT_STRUCT_ARG_STK
 #ifdef _TARGET_X86_
+#if !FEATURE_FIXED_OUT_ARGS
 bool m_pushStkArg;
+#endif // !FEATURE_FIXED_OUT_ARGS
 #else  // !_TARGET_X86_
 unsigned m_stkArgVarNum;
 unsigned m_stkArgOffset;
