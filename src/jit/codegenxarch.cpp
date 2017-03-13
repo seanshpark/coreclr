@@ -7785,6 +7785,7 @@ void CodeGen::genPutArgStkFieldList(GenTreePutArgStk* putArgStk)
             else
 #endif // !FEATURE_FIXED_OUT_ARGS
             {
+                bool test = false;
                 // The stack has been adjusted and we will load the field to intTmpReg and then store it on the stack.
                 assert(varTypeIsIntegralOrI(fieldNode));
                 switch (fieldNode->OperGet())
@@ -7793,12 +7794,33 @@ void CodeGen::genPutArgStkFieldList(GenTreePutArgStk* putArgStk)
                         inst_RV_TT(INS_mov, intTmpReg, fieldNode);
                         break;
                     case GT_CNS_INT:
+#if 0    // original code
                         genSetRegToConst(intTmpReg, fieldNode->TypeGet(), fieldNode);
+#else
+                    {
+                        unsigned baseVarNum = getBaseVarForPutArgStk(putArgStk);
+                        unsigned argOffset  = putArgStk->getArgOffset();
+                        if (fieldNode->IsIconHandle())
+                        {
+                            // mov dword ptr [esp+n], fieldNode->gtIntCon.gtIconVal
+                            getEmitter()->emitIns_S_I(ins_Store(fieldType), EA_HANDLE_CNS_RELOC, baseVarNum,
+                                                      argOffset, fieldNode->gtIntCon.gtIconVal);
+                        }
+                        else
+                        {
+                            // mov gword ptr [esp+n], fieldNode->gtIntCon.gtIconVal
+                            getEmitter()->emitIns_S_I(ins_Store(fieldType), emitTypeSize(fieldType), baseVarNum,
+                                                      argOffset, fieldNode->gtIntCon.gtIconVal);
+                        }
+                        test = true;
+                    }
+#endif
                         break;
                     default:
                         unreached();
                 }
-                genStoreRegToStackArg(fieldType, intTmpReg, fieldOffset - currentOffset);
+                if (!test)
+                    genStoreRegToStackArg(fieldType, intTmpReg, fieldOffset - currentOffset);
             }
         }
         else
