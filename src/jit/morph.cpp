@@ -2658,6 +2658,9 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
     // to need a temp variable, and EvalArgsToTemp actually creates the temp variable node.
     bool hasStackArgCopy = false;
 #endif
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+    bool hasStackArgCopy = false;
+#endif
 
 #ifndef LEGACY_BACKEND
     // Data structure for keeping track of non-standard args. Non-standard args are those that are not passed
@@ -3742,6 +3745,12 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
                             // the obj reading memory past the end of the valuetype
                             CLANG_FORMAT_COMMENT_ANCHOR;
 
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+                            // Make a copy of struct for nested-call
+                            // We may need to add some condition for performance.
+                            // This will let "hasStackArgCopy = true" below and make a copy of the structure.
+                            copyBlkClass = objClass;
+#else
                             if (roundupSize > originalSize)
                             {
                                 copyBlkClass = objClass;
@@ -3754,6 +3763,7 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
                                     copyBlkClass = NO_CLASS_HANDLE;
                                 }
                             }
+#endif // UNIX_X86_ABI && FEATURE_FIXED_OUT_ARGS
 
                             size = roundupSize / TARGET_POINTER_SIZE; // Normalize size to number of pointer sized items
                         }
@@ -4138,6 +4148,10 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
 #ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
             hasStackArgCopy = true;
 #endif
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+            hasStackArgCopy = true;
+            argx = args->gtOp.gtOp1;
+#endif // UNIX_X86_ABI && FEATURE_FIXED_OUT_ARGS
         }
 
 #ifndef LEGACY_BACKEND
@@ -4341,6 +4355,9 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
 #ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
                         || hasStackArgCopy
 #endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
+#if defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS
+                        || hasStackArgCopy
+#endif // UNIX_X86_ABI && FEATURE_FIXED_OUT_ARGS
                         ))
     {
         // This is the first time that we morph this call AND it has register arguments.
