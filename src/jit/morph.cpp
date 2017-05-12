@@ -3177,7 +3177,7 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
     {
         GenTreePtr* parentArgx = &args->gtOp.gtOp1;
 
-#if FEATURE_MULTIREG_ARGS
+#if FEATURE_MULTIREG_ARGS || (defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS)
         if (!hasStructArgument)
         {
             hasStructArgument = varTypeIsStruct(args->gtOp.gtOp1);
@@ -4446,12 +4446,12 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
         }
     }
 
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
+#if defined(FEATURE_UNIX_AMD64_STRUCT_PASSING) || (defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS)
 
     // Rewrite the struct args to be passed by value on stack or in registers.
     fgMorphSystemVStructArgs(call, hasStructArgument);
 
-#else // !FEATURE_UNIX_AMD64_STRUCT_PASSING
+#else // !(defined(FEATURE_UNIX_AMD64_STRUCT_PASSING) || (defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS))
 
 #ifndef LEGACY_BACKEND
     // In the future we can migrate UNIX_AMD64 to use this
@@ -4484,7 +4484,7 @@ GenTreeCall* Compiler::fgMorphArgs(GenTreeCall* call)
 #pragma warning(pop)
 #endif
 
-#ifdef FEATURE_UNIX_AMD64_STRUCT_PASSING
+#if defined(FEATURE_UNIX_AMD64_STRUCT_PASSING) || (defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS)
 // fgMorphSystemVStructArgs:
 //   Rewrite the struct args to be passed by value on stack or in registers.
 //
@@ -4549,7 +4549,9 @@ void Compiler::fgMorphSystemVStructArgs(GenTreeCall* call, bool hasStructArgumen
                 // If already OBJ it is set properly already.
                 if (arg->OperGet() == GT_OBJ)
                 {
+#if defined(FEATURE_UNIX_AMD64_STRUCT_PASSING)
                     assert(!fgEntryPtr->structDesc.passedInRegisters);
+#endif
                     continue;
                 }
 
@@ -4559,6 +4561,7 @@ void Compiler::fgMorphSystemVStructArgs(GenTreeCall* call, bool hasStructArgumen
 
                 GenTreeLclVarCommon* lclCommon =
                     arg->OperGet() == GT_ADDR ? arg->gtOp.gtOp1->AsLclVarCommon() : arg->AsLclVarCommon();
+#if defined(FEATURE_UNIX_AMD64_STRUCT_PASSING)
                 if (fgEntryPtr->structDesc.passedInRegisters)
                 {
                     if (fgEntryPtr->structDesc.eightByteCount == 1)
@@ -4599,6 +4602,7 @@ void Compiler::fgMorphSystemVStructArgs(GenTreeCall* call, bool hasStructArgumen
                                                                                        // for the CLR.
                     }
                 }
+#endif
 
                 // If we didn't change the type of the struct, it means
                 // its classification doesn't support to be passed directly through a
@@ -4606,11 +4610,13 @@ void Compiler::fgMorphSystemVStructArgs(GenTreeCall* call, bool hasStructArgumen
                 // where we copied the struct to.
                 if (!argListCreated)
                 {
+#if defined(FEATURE_UNIX_AMD64_STRUCT_PASSING)
                     if (fgEntryPtr->structDesc.passedInRegisters)
                     {
                         arg->gtType = type;
                     }
                     else
+#endif
                     {
                         // Make sure this is an addr node.
                         if (arg->OperGet() != GT_ADDR && arg->OperGet() != GT_LCL_VAR_ADDR)
@@ -4667,7 +4673,7 @@ void Compiler::fgMorphSystemVStructArgs(GenTreeCall* call, bool hasStructArgumen
     // Update the flags
     call->gtFlags |= (flagsSummary & GTF_ALL_EFFECT);
 }
-#endif // FEATURE_UNIX_AMD64_STRUCT_PASSING
+#endif // defined(FEATURE_UNIX_AMD64_STRUCT_PASSING) || (defined(UNIX_X86_ABI) && FEATURE_FIXED_OUT_ARGS)
 
 //-----------------------------------------------------------------------------
 // fgMorphMultiregStructArgs:  Locate the TYP_STRUCT arguments and
