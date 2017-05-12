@@ -359,8 +359,8 @@ typedef unsigned short regPairNoSmall; // arm: need 12 bits
 
   #define FEATURE_WRITE_BARRIER    1       // Generate the proper WriteBarrier calls for GC
 #if defined(UNIX_X86_ABI)
-//#define FEATURE_FIXED_OUT_ARGS   1       // Preallocate the outgoing arg area in the prolog
-  #define FEATURE_FIXED_OUT_ARGS   0       // X86 uses push instructions to pass args
+  #define FEATURE_FIXED_OUT_ARGS   1       // Preallocate the outgoing arg area in the prolog
+//#define FEATURE_FIXED_OUT_ARGS   0       // X86 uses push instructions to pass args
 #else
   #define FEATURE_FIXED_OUT_ARGS   0       // X86 uses push instructions to pass args
 #endif
